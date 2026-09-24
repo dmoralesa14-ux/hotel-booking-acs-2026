@@ -1,0 +1,25 @@
+{
+  "development": {
+    "username": "root",
+    "password": "1234",
+    "database": "SalfordDB",
+    "host": "mysql",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "1234",
+    "database": "SalfordDB",
+    "host": "mysql",
+    "dialect": "mysql"
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "mysql",
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}
