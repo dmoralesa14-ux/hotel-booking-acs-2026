@@ -3,11 +3,11 @@ const models = require("../models");
 // Get all room using stored procedure
 function getRooms(req, res) {
   models.sequelize
-    .query("CALL GetRooms()")
+    .query("SELECT * FROM GetRooms")
     .then((rooms) => {
       res.status(200).json({
         success: true,
-        rooms: rooms,
+        rooms: rooms[0],
       });
     })
     .catch((err) => {
