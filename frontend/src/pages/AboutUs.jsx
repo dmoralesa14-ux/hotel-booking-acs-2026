@@ -98,7 +98,7 @@ export default function AboutUs() {
                   <Card
                     className="max-w-sm mb-5"
                     imgAlt="Meaningful alt text for an image that is not purely decorative"
-                    imgSrc={`http://localhost:3001/uploads/${room.image}`}
+                    imgSrc={`/uploads/${room.image}`}
                   >
                     <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                       {room.category_name}

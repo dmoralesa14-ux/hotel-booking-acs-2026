@@ -459,7 +459,7 @@ export default function DashRooms() {
                                 <div className="flex items-center gap-4">
                                   <div className="w-28 h-16 relative">
                                     <img
-                                      src={`http://localhost:3001/uploads/${room.image}`}
+                                      src={`/uploads/${room.image}`}
                                       alt=""
                                       className="w-full h-full object-cover rounded-lg"
                                     />

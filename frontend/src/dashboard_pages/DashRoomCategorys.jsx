@@ -371,7 +371,7 @@ export default function DashRoomCategorys() {
                       src={
                         editedCategory.image instanceof File
                           ? URL.createObjectURL(editedCategory.image)
-                          : `http://localhost:3001/uploads/${editedCategory.image}`
+                          : `/uploads/${editedCategory.image}`
                       }
                       alt="Edited Room Preview"
                       className="h-32 w-full object-cover rounded-lg mb-4 border border-gray-300 dark:border-gray-700"
@@ -592,7 +592,7 @@ export default function DashRoomCategorys() {
                                 <div className="flex items-center gap-4">
                                   <div className="w-32 h-20 relative">
                                     <img
-                                      src={`http://localhost:3001/uploads/${roomCategory.image}`}
+                                      src={`/uploads/${roomCategory.image}`}
                                       alt=""
                                       className="w-full h-full object-cover rounded-lg"
                                     />

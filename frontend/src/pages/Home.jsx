@@ -157,7 +157,7 @@ export default function Home() {
                     {roomCategory.map((room) => (
                       <Card
                         key={room.id}
-                        imgSrc={`http://localhost:3001/uploads/${room.image}`}
+                        imgSrc={`/uploads/${room.image}`}
                         className="overflow-hidden shadow-lg rounded-lg "
                         // image with 600px and high 400px
                       >
