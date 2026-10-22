@@ -1,3 +1,28 @@
+/*
+ * DOBLES DE PRUEBA (mocks y stubs) - Módulo de Autenticación y sesión
+ *
+ * Dependencias aisladas, reemplazadas con jest.fn():
+ * - models.User (findOne y create): acceso a la base de datos.
+ * - bcrypt (genSalt, hash y compare): cifrado de contraseñas.
+ * - jsonwebtoken (sign): emisión del token de sesión.
+ *
+ * Por qué se aislaron:
+ * - models.User: la prueba verifica la lógica del controlador, no la base de datos,
+ *   y evita depender de usuarios existentes en ella.
+ * - bcrypt: genera una sal aleatoria, por lo que el hash cambia en cada ejecución y
+ *   no se puede comparar con un valor fijo; además es costoso en tiempo.
+ * - jsonwebtoken.sign: el token incluye la fecha de emisión, por lo que varía en
+ *   cada ejecución; con el doble se verifica con qué datos y clave se firmó.
+ *
+ * Tipo de doble: stub (mockResolvedValue, mockRejectedValue y mockImplementation
+ * definen lo que devuelven) y mock (toHaveBeenCalledWith verifica cómo se invocaron).
+ *
+ * Pruebas que lo usan:
+ * - "con credenciales válidas emite el token en una cookie httpOnly y no devuelve la contraseña"
+ * - "crea el usuario con la contraseña cifrada y responde 201"
+ * - "responde 400 cuando la contraseña es incorrecta y no emite token"
+ */
+
 jest.mock("../models", () => ({
   User: { findOne: jest.fn(), create: jest.fn() },
 }));
