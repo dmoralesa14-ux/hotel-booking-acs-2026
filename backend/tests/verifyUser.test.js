@@ -1,3 +1,22 @@
+/*
+ * DOBLES DE PRUEBA (stubs) - Middleware de sesión (verifyUser)
+ *
+ * Dependencia aislada: jsonwebtoken.verify, reemplazada con jest.fn().
+ *
+ * Por qué se aisló:
+ * - La prueba verifica la lógica del middleware (qué responde según el resultado de
+ *   la verificación), no la librería de tokens.
+ * - Permite simular un token inválido o uno válido sin firmar tokens reales ni
+ *   depender de su fecha de expiración.
+ *
+ * Tipo de doble: stub (mockImplementation define si la verificación falla o devuelve
+ * un usuario) y mock (toHaveBeenCalledWith verifica el token y la clave recibidos).
+ *
+ * Pruebas que lo usan:
+ * - "responde 401 cuando el token no es válido"
+ * - "con un token válido guarda el usuario en la petición y llama a next"
+ */
+
 jest.mock("jsonwebtoken", () => ({ verify: jest.fn() }));
 
 process.env.JWT_SECRET_KEY = "clave-de-prueba";
