@@ -1,3 +1,27 @@
+/*
+ * DOBLES DE PRUEBA (mocks y stubs) - Módulo de Reservas
+ *
+ * Dependencia aislada: models.sequelize.query (acceso a MySQL mediante Sequelize),
+ * reemplazada con jest.fn().
+ *
+ * Por qué se aisló:
+ * - Una prueba unitaria verifica la lógica del controlador (validaciones y respuestas
+ *   HTTP) de forma aislada. Con la base de datos real también se estaría probando
+ *   MySQL y los procedimientos almacenados, que corresponde a otro nivel de prueba.
+ * - Las pruebas quedan rápidas y deterministas: no dependen de red, de credenciales
+ *   ni de los datos que existan en la base.
+ * - Permite forzar errores de la base de datos (mockRejectedValue), difíciles de
+ *   provocar con una base real.
+ *
+ * Tipo de doble: stub (mockResolvedValue y mockRejectedValue definen lo que devuelve
+ * la base) y mock (toHaveBeenCalledWith verifica cómo se invocó el procedimiento).
+ *
+ * Pruebas que lo usan:
+ * - "crea la reserva y responde 200 con datos válidos"
+ * - "responde 500 cuando falla la base de datos"
+ * - "cancela la reserva y responde 200"
+ */
+
 jest.mock("../models", () => ({ sequelize: { query: jest.fn() } }));
 
 const models = require("../models");
