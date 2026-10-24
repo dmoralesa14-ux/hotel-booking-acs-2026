@@ -1,0 +1,1078 @@
+{
+  "info": {
+    "_postman_id": "9d3f6a1e-2b47-4c58-8e0a-71c5b3d4f2a9",
+    "name": "Hotel Booking - Pruebas de API",
+    "description": "Pruebas de API del backend de Hotel Booking. Incluye el flujo completo de una reserva, casos negativos y consultas. Cada solicitud verifica código de respuesta, esquema y contenido.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Flujo completo de una reserva",
+      "item": [
+        {
+          "name": "1. Crear usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"qa_{{sufijo}}\",\n  \"email\": \"qa_{{sufijo}}@correo.com\",\n  \"password\": \"Clave123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 201\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(201); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\",\"user\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"},\"user\":{\"type\":\"object\",\"required\":[\"id\"]}}}); });",
+                  "pm.test(\"Contenido: usuario creado con el nombre enviado\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.message).to.eql(\"User created successfully\");",
+                  "  pm.expect(json.user.username).to.eql(\"qa_\" + pm.collectionVariables.get(\"sufijo\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Iniciar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/signin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signin"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"qa_{{sufijo}}\",\n  \"password\": \"Clave123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"id\",\"username\",\"role\"],\"properties\":{\"id\":{\"type\":\"number\"},\"username\":{\"type\":\"string\"},\"role\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: usuario correcto, sin contraseña y con cookie de sesión\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.username).to.eql(\"qa_\" + pm.collectionVariables.get(\"sufijo\"));",
+                  "  pm.expect(json).to.not.have.property(\"password\");",
+                  "  pm.expect(String(pm.response.headers.get(\"Set-Cookie\"))).to.include(\"access_token=\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Consultar categorías de habitación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/roomcategory/getroomcategories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "roomcategory",
+                "getroomcategories"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"roomcategories\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"roomcategories\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"category_name\"]}}}}); });",
+                  "pm.test(\"Contenido: hay categorías y se guarda categoriaId\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.roomcategories.length).to.be.above(0);",
+                  "  pm.collectionVariables.set(\"categoriaId\", json.roomcategories[0].id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Crear habitación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/room/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room_name\": \"QA-{{sufijo}}\",\n  \"category_id\": {{categoriaId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 201\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(201); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Room created successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Room created successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Consultar habitaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/room/getrooms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "getrooms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"rooms\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"rooms\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"room_name\",\"status\"]}}}}); });",
+                  "pm.test(\"Contenido: la habitación creada está \\\"available\\\" y se guarda habitacionId\", function () {",
+                  "  const json = pm.response.json();",
+                  "  const room = json.rooms.find(function (r) { return r.room_name === \"QA-\" + pm.collectionVariables.get(\"sufijo\"); });",
+                  "  pm.expect(room, \"habitación creada\").to.not.be.undefined;",
+                  "  pm.expect(room.status).to.eql(\"available\");",
+                  "  pm.collectionVariables.set(\"habitacionId\", room.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Crear cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/customer/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "customer",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"p_name\": \"Cliente QA {{sufijo}}\",\n  \"p_contact_no\": \"{{telefono}}\",\n  \"p_email\": \"cliente_{{sufijo}}@correo.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 201\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(201); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Customer created successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Customer created successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Consultar clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customer/getcustomers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "customer",
+                "getcustomers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"customers\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"customers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"name\",\"email\"]}}}}); });",
+                  "pm.test(\"Contenido: el cliente creado aparece por su correo y se guarda clienteId\", function () {",
+                  "  const json = pm.response.json();",
+                  "  const cliente = json.customers.find(function (c) { return c.email === \"cliente_\" + pm.collectionVariables.get(\"sufijo\") + \"@correo.com\"; });",
+                  "  pm.expect(cliente, \"cliente creado\").to.not.be.undefined;",
+                  "  pm.collectionVariables.set(\"clienteId\", cliente.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Crear reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booking/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booking",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room_id\": {{habitacionId}},\n  \"customer_id\": {{clienteId}},\n  \"check_in\": \"{{fechaEntrada}}\",\n  \"check_out\": \"{{fechaSalida}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: reserva creada correctamente\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.message).to.eql(\"Booking created successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Consultar reservas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/booking/get-all-details",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booking",
+                "get-all-details"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"data\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"data\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"booking_id\",\"booking_status\",\"room_id\",\"room_status\",\"customer_id\"]}}}}); });",
+                  "pm.test(\"Contenido: la reserva está \\\"pending\\\", la habitación \\\"occupied\\\" y se guarda reservaId\", function () {",
+                  "  const json = pm.response.json();",
+                  "  const habitacionId = Number(pm.collectionVariables.get(\"habitacionId\"));",
+                  "  const clienteId = Number(pm.collectionVariables.get(\"clienteId\"));",
+                  "  const reserva = json.data.find(function (b) { return Number(b.room_id) === habitacionId && Number(b.customer_id) === clienteId; });",
+                  "  pm.expect(reserva, \"reserva creada\").to.not.be.undefined;",
+                  "  pm.expect(reserva.booking_status).to.eql(\"pending\");",
+                  "  pm.expect(reserva.room_status).to.eql(\"occupied\");",
+                  "  pm.collectionVariables.set(\"reservaId\", reserva.booking_id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Editar reserva",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booking/edit",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booking",
+                "edit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": {{reservaId}},\n  \"room_id\": {{habitacionId}},\n  \"check_in\": \"{{fechaEntrada}}\",\n  \"check_out\": \"{{fechaSalida}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Booking edited successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Booking edited successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Registrar check-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booked/checkin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booked",
+                "checkin"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": {{reservaId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Check-in completed successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Check-in completed successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12. Consultar reservas con check-in",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/booking/get-checked-in-details",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booking",
+                "get-checked-in-details"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"data\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"data\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"booking_id\",\"booking_status\"]}}}}); });",
+                  "pm.test(\"Contenido: la reserva aparece con booking_status \\\"checked_in\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  const reserva = json.data.find(function (b) { return Number(b.booking_id) === Number(pm.collectionVariables.get(\"reservaId\")); });",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(reserva, \"reserva con check-in\").to.not.be.undefined;",
+                  "  pm.expect(reserva.booking_status).to.eql(\"checked_in\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13. Registrar check-out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booked/checkout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booked",
+                "checkout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_id\": {{reservaId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Check-out completed successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Check-out completed successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14. Verificar habitación liberada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/room/getrooms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "getrooms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"rooms\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"rooms\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"room_name\",\"status\"]}}}}); });",
+                  "pm.test(\"Contenido: la habitación creada vuelve a \\\"available\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  const room = json.rooms.find(function (r) { return Number(r.id) === Number(pm.collectionVariables.get(\"habitacionId\")); });",
+                  "  pm.expect(room, \"habitación creada\").to.not.be.undefined;",
+                  "  pm.expect(room.status).to.eql(\"available\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15. Eliminar habitación",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/room/delete/{{habitacionId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "delete",
+                "{{habitacionId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Room deleted successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Room deleted successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16. Eliminar cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customer/delete/{{clienteId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "customer",
+                "delete",
+                "{{clienteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"Customer deleted successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"Customer deleted successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17. Cerrar sesión",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/signout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signout"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: message es \\\"User signed out successfully\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.eql(\"User signed out successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Casos negativos",
+      "item": [
+        {
+          "name": "18. Inicio de sesión con credenciales inválidas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/signin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signin"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"no_existe_{{sufijo}}\",\n  \"password\": \"Clave123*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 400\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(400); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: success es false y message es \\\"Invalid credentials\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.message).to.eql(\"Invalid credentials\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19. Crear reserva sin room_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booking/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booking",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": 1,\n  \"check_in\": \"{{fechaEntrada}}\",\n  \"check_out\": \"{{fechaSalida}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 400\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(400); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: success es false y message es \\\"Room ID is required\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.message).to.eql(\"Room ID is required\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20. Crear reserva con fecha de salida pasada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booking/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booking",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room_id\": 1,\n  \"customer_id\": 1,\n  \"check_in\": \"{{fechaPasadaEntrada}}\",\n  \"check_out\": \"{{fechaPasadaSalida}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 400\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(400); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: success es false y message es \\\"Check-out date should be future date\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.message).to.eql(\"Check-out date should be future date\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21. Crear cliente con campos incompletos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/customer/create",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "customer",
+                "create"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"p_name\": \"Cliente sin datos completos\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 400\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(400); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: success es false y message es \\\"Please fill in all fields\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.message).to.eql(\"Please fill in all fields\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22. Check-in sin booking_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/booked/checkin",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "booked",
+                "checkin"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 400\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(400); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"message\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"message\":{\"type\":\"string\"}}}); });",
+                  "pm.test(\"Contenido: success es false y message es \\\"Booking ID is required.\\\"\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.false;",
+                  "  pm.expect(json.message).to.eql(\"Booking ID is required.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Consultas independientes",
+      "item": [
+        {
+          "name": "23. Consultar detalle de habitaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/room/getroom-all-details",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "getroom-all-details"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"rooms\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"rooms\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"room_name\",\"status\",\"category_name\",\"price\"]}}}}); });",
+                  "pm.test(\"Contenido: success es true y la lista de habitaciones no está vacía\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.rooms.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "24. Consultar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/user/getusers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "getusers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código de respuesta es 200\", function () { pm.expect(pm.response.code, \"Cuerpo de la respuesta: \" + pm.response.text().slice(0, 300)).to.eql(200); });",
+                  "pm.test(\"Esquema de la respuesta es válido\", function () { pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"success\",\"users\"],\"properties\":{\"success\":{\"type\":\"boolean\"},\"users\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"username\"]}}}}); });",
+                  "pm.test(\"Contenido: el usuario creado en la solicitud 1 está en la lista\", function () {",
+                  "  const json = pm.response.json();",
+                  "  const nombre = \"qa_\" + pm.collectionVariables.get(\"sufijo\");",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.users.some(function (u) { return u.username === nombre; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get(\"sufijo\")) {",
+          "  const ahora = Date.now();",
+          "  const dia = 24 * 60 * 60 * 1000;",
+          "  const formato = function (ms) { return new Date(ms).toISOString().slice(0, 16); };",
+          "  pm.collectionVariables.set(\"sufijo\", String(ahora));",
+          "  pm.collectionVariables.set(\"telefono\", String(ahora).slice(-8));",
+          "  pm.collectionVariables.set(\"fechaEntrada\", formato(ahora + 2 * dia));",
+          "  pm.collectionVariables.set(\"fechaSalida\", formato(ahora + 4 * dia));",
+          "  pm.collectionVariables.set(\"fechaPasadaEntrada\", formato(ahora - 5 * dia));",
+          "  pm.collectionVariables.set(\"fechaPasadaSalida\", formato(ahora - 2 * dia));",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": []
+}
