@@ -34,6 +34,21 @@ pipeline {
             }
         }
 
+        stage('Análisis de SonarQube Cloud') {
+            steps {
+                sh '''
+                    sed -i 's#^SF:#SF:backend/#' backend/coverage/lcov.info
+                    sed -i 's#^SF:#SF:frontend/#' frontend/coverage/lcov.info
+                '''
+                withSonarQubeEnv('SonarCloud1815') {
+                    script {
+                        def scannerHome = tool 'SonarScanner1815'
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
+                }
+            }
+        }
+
         stage('Pruebas de API con Newman') {
             steps {
                 sh 'mkdir -p newman'
