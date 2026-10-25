@@ -379,7 +379,7 @@ export default function DashRoomCategorys() {
                   )}
                   <FileInput
                     id="edit-dropzone-file"
-                    onChange={(e) => handleDrop(e.target.files, true)}
+                    onChange={(e) => handleDrop(e.target.files)}
                     accept="image/png, image/jpeg"
                   />
                 </div>

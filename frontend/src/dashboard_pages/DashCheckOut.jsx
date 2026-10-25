@@ -16,7 +16,6 @@ import {
   TextInput,
   FileInput,
   ButtonGroup,
-  Badge,
 } from "flowbite-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { React, useEffect, useRef, useState } from "react";
@@ -35,6 +34,7 @@ import {
 import { MdDeleteForever } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import StatusBadge from "../components/StatusBadge";
 
 export default function DashCheckOut() {
   const { currentUser } = useSelector((state) => state.user);
@@ -273,31 +273,7 @@ export default function DashCheckOut() {
                     <Label value="Status : " />
 
                     <div className="w-28">
-                      {bookedCheckOut.booking_status === "checked_out" ? (
-                        <Badge color="pink" size="lg">
-                          Check Out
-                        </Badge>
-                      ) : bookedCheckOut.booking_status === "checked_in" ? (
-                        <Badge color="indigo" size="lg">
-                          Check In
-                        </Badge>
-                      ) : bookedCheckOut.booking_status === "confirmed" ? (
-                        <Badge color="success" size="lg">
-                          Confirmed
-                        </Badge>
-                      ) : bookedCheckOut.booking_status === "cancelled" ? (
-                        <Badge color="failure" size="lg">
-                          Cancelled
-                        </Badge>
-                      ) : bookedCheckOut.booking_status === "Canceled" ? (
-                        <Badge color="red" size="lg">
-                          Canceled
-                        </Badge>
-                      ) : (
-                        <Badge color="warning" size="lg">
-                          Pending
-                        </Badge>
-                      )}
+                      <StatusBadge status={bookedCheckOut.booking_status} />
                     </div>
                   </div>
 
@@ -390,32 +366,7 @@ export default function DashCheckOut() {
                           </TableCell>
 
                           <TableCell>
-                            {bookedDetails.booking_status === "checked_out" ? (
-                              <Badge color="pink" size="lg">
-                                Check Out
-                              </Badge>
-                            ) : bookedDetails.booking_status ===
-                              "checked_in" ? (
-                              <Badge color="indigo" size="lg">
-                                Check In
-                              </Badge>
-                            ) : bookedDetails.booking_status === "confirmed" ? (
-                              <Badge color="success" size="lg">
-                                Confirmed
-                              </Badge>
-                            ) : bookedDetails.booking_status === "cancelled" ? (
-                              <Badge color="failure" size="lg">
-                                Cancelled
-                              </Badge>
-                            ) : bookedDetails.booking_status === "Canceled" ? (
-                              <Badge color="red" size="lg">
-                                Canceled
-                              </Badge>
-                            ) : (
-                              <Badge color="warning" size="lg">
-                                Pending
-                              </Badge>
-                            )}
+                            <StatusBadge status={bookedDetails.booking_status} />
                           </TableCell>
                           <TableCell>
                             <Button

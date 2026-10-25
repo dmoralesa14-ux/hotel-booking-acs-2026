@@ -6,67 +6,64 @@ const { errorHandler } = require("../utils/error");
 
 dotenv.config();
 
-function signUp(req, res) {
-  models.User.findOne({ where: { email: req.body.email } })
-    .then((result) => {
-      if (result) {
-        return res.status(400).json({
-          success: false,
-          message: "Email already exists",
-        });
-      } else {
-        models.User.findOne({ where: { username: req.body.username } })
-          .then((result) => {
-            if (result) {
-              return res.status(400).json({
-                success: false,
-                message: "Username already exists",
-              });
-            } else {
-              bcrypt.genSalt(10, function (err, salt) {
-                bcrypt.hash(req.body.password, salt, function (err, hash) {
-                  const user = {
-                    username: req.body.username,
-                    email: req.body.email,
-                    password: hash,
-                    role: "admin",
-                  };
-
-                  models.User.create(user)
-                    .then((result) => {
-                      res.status(201).json({
-                        success: true,
-                        message: "User created successfully",
-                        user: result,
-                      });
-                    })
-                    .catch((err) => {
-                      res.status(500).json({
-                        success: false,
-                        message: "Internal Server Error",
-                        error: err,
-                      });
-                    });
-                });
-              });
-            }
-          })
-          .catch((error) => {
-            res.status(500).json({
-              success: false,
-              message: "Internal Server Error",
-              error: error,
-            });
-          });
+function hashPassword(password) {
+  return new Promise((resolve, reject) => {
+    bcrypt.genSalt(10, function (saltError, salt) {
+      if (saltError) {
+        return reject(saltError);
       }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        success: false,
-        message: "Internal Server Error",
-        error: error,
+      bcrypt.hash(password, salt, function (hashError, hash) {
+        if (hashError) {
+          return reject(hashError);
+        }
+        resolve(hash);
       });
     });
+  });
+}
+
+async function signUp(req, res) {
+  try {
+    const emailExists = await models.User.findOne({
+      where: { email: req.body.email },
+    });
+    if (emailExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
+    const usernameExists = await models.User.findOne({
+      where: { username: req.body.username },
+    });
+    if (usernameExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Username already exists",
+      });
+    }
+
+    const hash = await hashPassword(req.body.password);
+    const result = await models.User.create({
+      username: req.body.username,
+      email: req.body.email,
+      password: hash,
+      role: "admin",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error,
+    });
+  }
 }
 
 function signIn(req, res) {
