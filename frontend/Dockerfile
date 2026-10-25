@@ -5,7 +5,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY . .
+# Copy only the files the application needs
+COPY index.html eslint.config.js postcss.config.js tailwind.config.js vite.config.js ./
+COPY src ./src
 
 EXPOSE 5173
 

@@ -8,8 +8,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the project
-COPY . .
+# Copy only the files the application needs
+COPY app.js server.js init-db.sh ./
+COPY config ./config
+COPY controllers ./controllers
+COPY migrations ./migrations
+COPY models ./models
+COPY routes ./routes
+COPY utils ./utils
 
 # Expose app port
 EXPOSE 3001
