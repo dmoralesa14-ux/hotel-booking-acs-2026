@@ -79,8 +79,9 @@ pipeline {
                           echo "SonarQube Cloud no terminó de procesar el análisis a tiempo"
                           exit 1
                         fi
-                        GATE=$(curl -s -u "$SONAR_AUTH_TOKEN:" "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$ANALYSIS_ID")
+                        GATE=$(curl -sS -u "$SONAR_AUTH_TOKEN:" "${SONAR_HOST_URL%/}/api/qualitygates/project_status?analysisId=$ANALYSIS_ID")
                         GATE_STATUS=$(echo "$GATE" | grep -o '"status":"[A-Z]*"' | head -1 | cut -d'"' -f4)
+                        echo "Respuesta de SonarQube Cloud: $GATE"
                         echo "Quality gate de SonarQube Cloud: $GATE_STATUS"
                         if [ "$GATE_STATUS" != "OK" ]; then
                           echo "El quality gate no fue aprobado"
