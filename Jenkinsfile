@@ -35,6 +35,9 @@ pipeline {
         }
 
         stage('Análisis de SonarQube Cloud') {
+            when {
+                branch 'main'
+            }
             steps {
                 sh '''
                     sed -i 's#^SF:#SF:backend/#' backend/coverage/lcov.info
@@ -45,6 +48,45 @@ pipeline {
                         def scannerHome = tool 'SonarScanner3872'
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
+                }
+            }
+        }
+
+        stage('Quality gate de SonarQube Cloud') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withSonarQubeEnv('SonarCloud3872') {
+                    sh '''
+                        TASK_URL=$(sed -n 's/^ceTaskUrl=//p' .scannerwork/report-task.txt)
+                        ANALYSIS_ID=""
+                        for i in $(seq 1 30); do
+                          RESP=$(curl -s -u "$SONAR_AUTH_TOKEN:" "$TASK_URL")
+                          STATUS=$(echo "$RESP" | grep -o '"status":"[A-Z_]*"' | head -1 | cut -d'"' -f4)
+                          echo "Estado del análisis en SonarQube Cloud: $STATUS"
+                          if [ "$STATUS" = "SUCCESS" ]; then
+                            ANALYSIS_ID=$(echo "$RESP" | grep -o '"analysisId":"[^"]*"' | head -1 | cut -d'"' -f4)
+                            break
+                          fi
+                          if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELED" ]; then
+                            echo "El análisis terminó con estado $STATUS"
+                            exit 1
+                          fi
+                          sleep 10
+                        done
+                        if [ -z "$ANALYSIS_ID" ]; then
+                          echo "SonarQube Cloud no terminó de procesar el análisis a tiempo"
+                          exit 1
+                        fi
+                        GATE=$(curl -s -u "$SONAR_AUTH_TOKEN:" "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$ANALYSIS_ID")
+                        GATE_STATUS=$(echo "$GATE" | grep -o '"status":"[A-Z]*"' | head -1 | cut -d'"' -f4)
+                        echo "Quality gate de SonarQube Cloud: $GATE_STATUS"
+                        if [ "$GATE_STATUS" != "OK" ]; then
+                          echo "El quality gate no fue aprobado"
+                          exit 1
+                        fi
+                    '''
                 }
             }
         }
