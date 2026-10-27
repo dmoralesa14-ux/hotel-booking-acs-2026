@@ -12,15 +12,18 @@ pipeline {
 
     environment {
         CI = 'true'
-        API_URL = 'https://hotel-booking-backend-acs-2026.onrender.com'
+        AMBIENTE = "${env.BRANCH_NAME == 'main' ? 'PROD' : (env.BRANCH_NAME == 'QA' ? 'QA' : (env.BRANCH_NAME == 'DEV' ? 'DEV' : 'FEATURE'))}"
+        HOOK_SUFIJO = "${env.BRANCH_NAME == 'main' ? 'prod' : (env.BRANCH_NAME == 'QA' ? 'qa' : 'dev')}"
+        API_URL = "${env.BRANCH_NAME == 'main' ? 'https://hotel-booking-backend-acs-2026.onrender.com' : (env.BRANCH_NAME == 'QA' ? 'https://hotel-booking-backend-qa-acs-2026.onrender.com' : 'https://hotel-booking-backend-dev-acs-2026.onrender.com')}"
     }
 
     stages {
         stage('Compilación') {
             steps {
+                echo "Rama: ${env.BRANCH_NAME} | Ambiente: ${env.AMBIENTE} | API de pruebas: ${env.API_URL}"
                 dir('backend') {
                     sh 'npm install --ignore-scripts'
-                    sh 'find . -name ".js" -not -path "./node_modules/" -not -path "./coverage/*" -print0 | xargs -0 -n1 node --check'
+                    sh 'find . -name "*.js" -not -path "./node_modules/*" -not -path "./coverage/*" -print0 | xargs -0 -n1 node --check'
                 }
                 dir('frontend') {
                     sh 'npm install'
@@ -107,7 +110,7 @@ pipeline {
             steps {
                 sh 'mkdir -p newman'
                 sh 'curl -s -o /dev/null --max-time 120 --retry 10 --retry-delay 10 --retry-all-errors "$API_URL/"'
-                sh 'npx --yes newman@6.2.2 run postman/hotel-booking.postman_collection.json -e postman/hotel-booking.postman_environment.json --reporters cli,junit --reporter-junit-export newman/resultados.xml --timeout-request 120000'
+                sh 'npx --yes newman@6.2.2 run postman/hotel-booking.postman_collection.json -e postman/hotel-booking.postman_environment.json --env-var "base_url=$API_URL" --reporters cli,junit --reporter-junit-export newman/resultados.xml --timeout-request 120000'
             }
         }
     }
@@ -115,7 +118,7 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'newman/resultados.xml'
-            archiveArtifacts artifacts: 'backend/coverage/*, frontend/coverage/, newman/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'backend/coverage/**, frontend/coverage/**, newman/**', allowEmptyArchive: true
         }
     }
 }
