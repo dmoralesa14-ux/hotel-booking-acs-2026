@@ -6,20 +6,36 @@ pipeline {
     }
 
     options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 40, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
 
     environment {
         CI = 'true'
-        API_URL = 'https://hotel-booking-backend-acs-2026.onrender.com'
+        AMBIENTE = "${env.BRANCH_NAME == 'main' ? 'PROD' : (env.BRANCH_NAME == 'QA' ? 'QA' : (env.BRANCH_NAME == 'DEV' ? 'DEV' : 'FEATURE'))}"
+        HOOK_SUFIJO = "${env.BRANCH_NAME == 'main' ? 'prod' : (env.BRANCH_NAME == 'QA' ? 'qa' : 'dev')}"
+        API_URL = "${env.BRANCH_NAME == 'main' ? 'https://hotel-booking-backend-acs-2026.onrender.com' : (env.BRANCH_NAME == 'QA' ? 'https://hotel-booking-backend-qa-acs-2026.onrender.com' : 'https://hotel-booking-backend-dev-acs-2026.onrender.com')}"
+        FRONTEND_URL = "${env.BRANCH_NAME == 'main' ? 'https://hotel-booking-frontend-acs-2026.onrender.com' : (env.BRANCH_NAME == 'QA' ? 'https://hotel-booking-frontend-qa-acs-2026.onrender.com' : 'https://hotel-booking-frontend-dev-acs-2026.onrender.com')}"
     }
 
     stages {
+        stage('Compilación') {
+            steps {
+                echo "Rama: ${env.BRANCH_NAME} | Ambiente: ${env.AMBIENTE} | API de pruebas: ${env.API_URL}"
+                dir('backend') {
+                    sh 'npm install --ignore-scripts'
+                    sh 'find . -name "*.js" -not -path "./node_modules/*" -not -path "./coverage/*" -print0 | xargs -0 -n1 node --check'
+                }
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+
         stage('Pruebas unitarias del backend') {
             steps {
                 dir('backend') {
-                    sh 'npm install --ignore-scripts'
                     sh 'npm test'
                 }
             }
@@ -28,7 +44,6 @@ pipeline {
         stage('Pruebas unitarias del frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm install'
                     sh 'npm test'
                 }
             }
@@ -96,7 +111,62 @@ pipeline {
             steps {
                 sh 'mkdir -p newman'
                 sh 'curl -s -o /dev/null --max-time 120 --retry 10 --retry-delay 10 --retry-all-errors "$API_URL/"'
-                sh 'npx --yes newman@6.2.2 run postman/hotel-booking.postman_collection.json -e postman/hotel-booking.postman_environment.json --reporters cli,junit --reporter-junit-export newman/resultados.xml --timeout-request 120000'
+                sh 'npx --yes newman@6.2.2 run postman/hotel-booking.postman_collection.json -e postman/hotel-booking.postman_environment.json --env-var "base_url=$API_URL" --reporters cli,junit --reporter-junit-export newman/resultados.xml --timeout-request 120000'
+            }
+        }
+
+        stage('Despliegue al ambiente') {
+            when {
+                anyOf {
+                    branch 'DEV'
+                    branch 'QA'
+                    branch 'main'
+                }
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: "render-hook-backend-${env.HOOK_SUFIJO}", variable: 'HOOK_BACKEND'),
+                    string(credentialsId: "render-hook-frontend-${env.HOOK_SUFIJO}", variable: 'HOOK_FRONTEND')
+                ]) {
+                    sh '''
+                        echo "Desplegando el backend en $AMBIENTE"
+                        curl -fsS -X POST "$HOOK_BACKEND"
+                        echo
+                        echo "Desplegando el frontend en $AMBIENTE"
+                        curl -fsS -X POST "$HOOK_FRONTEND"
+                        echo
+                    '''
+                }
+            }
+        }
+
+        stage('Verificación del ambiente') {
+            when {
+                anyOf {
+                    branch 'DEV'
+                    branch 'QA'
+                    branch 'main'
+                }
+            }
+            steps {
+                sh '''
+                    for URL in "$API_URL/api/roomcategory/getroomcategories" "$FRONTEND_URL/"; do
+                      OK=0
+                      for i in $(seq 1 30); do
+                        CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$URL" || true)
+                        echo "$URL -> $CODE"
+                        if [ "$CODE" = "200" ]; then
+                          OK=1
+                          break
+                        fi
+                        sleep 20
+                      done
+                      if [ "$OK" != "1" ]; then
+                        echo "El ambiente no respondió: $URL"
+                        exit 1
+                      fi
+                    done
+                '''
             }
         }
     }
