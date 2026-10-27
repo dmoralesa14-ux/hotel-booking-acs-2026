@@ -16,10 +16,22 @@ pipeline {
     }
 
     stages {
-        stage('Pruebas unitarias del backend') {
+        stage('Compilación') {
             steps {
                 dir('backend') {
                     sh 'npm install --ignore-scripts'
+                    sh 'find . -name ".js" -not -path "./node_modules/" -not -path "./coverage/*" -print0 | xargs -0 -n1 node --check'
+                }
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Pruebas unitarias del backend') {
+            steps {
+                dir('backend') {
                     sh 'npm test'
                 }
             }
@@ -28,7 +40,6 @@ pipeline {
         stage('Pruebas unitarias del frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm install'
                     sh 'npm test'
                 }
             }
@@ -104,7 +115,7 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'newman/resultados.xml'
-            archiveArtifacts artifacts: 'backend/coverage/**, frontend/coverage/**, newman/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'backend/coverage/*, frontend/coverage/, newman/*', allowEmptyArchive: true
         }
     }
 }
