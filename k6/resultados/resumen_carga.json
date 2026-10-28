@@ -1,0 +1,38 @@
+{
+  "ambiente": "https://hotel-booking-backend-qa-acs-2026.onrender.com",
+  "duracion_fase_carga_s": 540,
+  "usuarios_virtuales_maximos": 50,
+  "solicitudes_totales": 30918,
+  "throughput_solicitudes_por_s": 57.25555555555555,
+  "tiempo_respuesta_promedio_ms": 228.43160155427273,
+  "tiempo_respuesta_p95_ms": 304.9543539999999,
+  "tasa_error": 0,
+  "por_endpoint": [
+    {
+      "endpoint": "/api/room/getrooms",
+      "solicitudes": 10306,
+      "promedio_ms": 226.03260062875987,
+      "p95_ms": 308.9326425,
+      "maximo_ms": 3180.324665,
+      "rnf02": "CUMPLE"
+    },
+    {
+      "endpoint": "/api/booking/get-all-details",
+      "solicitudes": 10306,
+      "promedio_ms": 230.22718433281597,
+      "p95_ms": 303.23569025,
+      "maximo_ms": 4477.265457,
+      "rnf02": "CUMPLE"
+    },
+    {
+      "endpoint": "/api/roomcategory/getroomcategories",
+      "solicitudes": 10306,
+      "promedio_ms": 229.03501970124074,
+      "p95_ms": 303.83615499999996,
+      "maximo_ms": 3179.825841,
+      "rnf02": "CUMPLE"
+    }
+  ],
+  "rnf02": "CUMPLE",
+  "rnf01_indicador_error": "CUMPLE"
+}
